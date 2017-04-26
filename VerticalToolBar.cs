@@ -14,29 +14,36 @@ namespace SB_VerticalToolMenu
     class VerticalToolBar : IClickableMenu
     {
         public List<ClickableComponent> buttons = new List<ClickableComponent>();
-        private const int NUM_BUTTONS = 5;
+        public static int NUM_BUTTONS = 5;
         private string hoverTitle = "";
         private float transparency = 1f;
         public Rectangle toolbarTextSource = new Rectangle(0, 256, 60, 60);
-        private new int yPositionOnScreen;
         public int numToolsinToolbar = 0;
         private Item hoverItem;
+        public bool forceDraw = false;
 
-        public VerticalToolBar(int x, int y)
+        public VerticalToolBar(int x, int y, int numButtons = 5, bool forceDraw = false)
             : base(x, y, 
                   (Game1.tileSize * 3 / 2), 
-                  ( (Game1.tileSize * NUM_BUTTONS) + (Game1.tileSize / 2) ), false)
+                  ( (Game1.tileSize * numButtons) + (Game1.tileSize / 2) ), false)
         {
-            for(int index = 0; index < NUM_BUTTONS; ++index)
+            NUM_BUTTONS = numButtons;
+            this.forceDraw = forceDraw;
+            for (int count = Game1.player.items.Count; count < (36 + VerticalToolBar.NUM_BUTTONS); count++)
+            {
+                Game1.player.items.Add((Item)null);
+            }
+
+            for (int index = 0; index < NUM_BUTTONS; ++index)
             {
                 this.buttons.Add(
                     new ClickableComponent(
                         new Rectangle(
                             xPositionOnScreen + 16,
-                            yPositionOnScreen + (index * Game1.tileSize),
+                            this.yPositionOnScreen + (index * Game1.tileSize),
                             Game1.tileSize, 
                             Game1.tileSize),
-                        string.Concat((object)index)));
+                        string.Concat((object)(index + 36))));
             }
         }
 
@@ -109,7 +116,7 @@ namespace SB_VerticalToolMenu
             for (int index = 0; index < NUM_BUTTONS; ++index)
                 buttons[index].bounds = new Rectangle(
                             xPositionOnScreen + 16,
-                            yPositionOnScreen + (index * Game1.tileSize),
+                            this.yPositionOnScreen + (index * Game1.tileSize),
                             Game1.tileSize,
                             Game1.tileSize);
         }
@@ -126,58 +133,57 @@ namespace SB_VerticalToolMenu
         public override void draw(SpriteBatch b)
         {
             //Checks if the player is on any other menu before drawing the tooltip
-            if (Game1.activeClickableMenu != null)
+            if (Game1.activeClickableMenu != null && !forceDraw)
                 return;
             //Checks and draws the buttons
-            int positionOnScreen1 = this.yPositionOnScreen;
-            if (Game1.options.pinToolbarToggle)
+            if (!forceDraw)
             {
-                this.yPositionOnScreen = Game1.viewport.Height - getInitialHeight();
-                this.transparency = Math.Min(1f, this.transparency + 0.075f);
-                if ((double)Game1.GlobalToLocal(Game1.viewport, new Vector2((float)Game1.player.GetBoundingBox().Center.X, (float)Game1.player.GetBoundingBox().Center.Y)).Y > (double)(Game1.viewport.Height - Game1.tileSize * 3))
-                    this.transparency = Math.Max(0.33f, this.transparency - 0.15f);
-            }
-            else
-                this.yPositionOnScreen = (double)Game1.GlobalToLocal(Game1.viewport, new Vector2((float)Game1.player.GetBoundingBox().Center.X, (float)Game1.player.GetBoundingBox().Center.Y)).Y > (double)(Game1.viewport.Height / 2 + Game1.tileSize) ? Game1.tileSize / 8  : Game1.viewport.Height - getInitialHeight() - Game1.tileSize / 8;
-            int positionOnScreen2 = this.yPositionOnScreen;
-            if (positionOnScreen1 != positionOnScreen2)
-            {
-                for (int index = 0; index < NUM_BUTTONS; ++index)
-                    this.buttons[index].bounds.Y = this.yPositionOnScreen + (index * Game1.tileSize);
+                int positionOnScreen1 = this.yPositionOnScreen;
+                if (Game1.options.pinToolbarToggle)
+                {
+                    this.yPositionOnScreen = Game1.viewport.Height - getInitialHeight();
+                    this.transparency = Math.Min(1f, this.transparency + 0.075f);
+                    if ((double)Game1.GlobalToLocal(Game1.viewport, new Vector2((float)Game1.player.GetBoundingBox().Center.X, (float)Game1.player.GetBoundingBox().Center.Y)).Y > (double)(Game1.viewport.Height - Game1.tileSize * 3))
+                        this.transparency = Math.Max(0.33f, this.transparency - 0.15f);
+                }
+                else
+                    this.yPositionOnScreen = (double)Game1.GlobalToLocal(Game1.viewport, new Vector2((float)Game1.player.GetBoundingBox().Center.X, (float)Game1.player.GetBoundingBox().Center.Y)).Y > (double)(Game1.viewport.Height / 2 + Game1.tileSize) ? Game1.tileSize / 8 : Game1.viewport.Height - getInitialHeight() - Game1.tileSize / 8;
+                int positionOnScreen2 = this.yPositionOnScreen;
+                if (positionOnScreen1 != positionOnScreen2)
+                {
+                    for (int index = 0; index < NUM_BUTTONS; ++index)
+                        this.buttons[index].bounds.Y = this.yPositionOnScreen + (index * Game1.tileSize);
+                }
             }
             //Draws the backgound texture. 
             IClickableMenu.drawTextureBox(
                 b, 
                 Game1.menuTexture, 
                 this.toolbarTextSource, 
-                xPositionOnScreen, 
-                yPositionOnScreen,
+                xPositionOnScreen,
+                this.yPositionOnScreen,
                 Game1.tileSize * 3 / 2,
                 ((Game1.tileSize * NUM_BUTTONS) + (Game1.tileSize / 2)), 
                 Color.White * this.transparency, 1f, false);
             int toolBarIndex = 0;
-            for (int itemIndex = 0; itemIndex < Game1.player.items.Count; itemIndex++)
+            for (int index = 0; index < NUM_BUTTONS; ++index)
             {
-                if(Game1.player.Items[itemIndex] != null && 
-                    ( Game1.player.Items[itemIndex] is Axe || Game1.player.Items[itemIndex] is Hoe
-                    || Game1.player.Items[itemIndex] is Pickaxe|| (Game1.player.items[itemIndex] is MeleeWeapon && (Game1.player.items[itemIndex] as MeleeWeapon).Name.Equals("Scythe"))
-                    || Game1.player.Items[itemIndex] is FishingRod))
+                this.buttons[index].scale = Math.Max(1f, this.buttons[index].scale - 0.025f);
+                Vector2 location = new Vector2(
+                    xPositionOnScreen + 16,
+                    (float)(this.yPositionOnScreen + (index * Game1.tileSize + 16)));
+                b.Draw(Game1.menuTexture, location, new Rectangle?(Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, Game1.player.CurrentToolIndex == (index + 36) ? 56 : 10, -1, -1)), Color.White * transparency);
+                // Need to customize it for toolset //string text = index == 9 ? "0" : (index == 10 ? "-" : (index == 11 ? "=" : string.Concat((object)(index + 1))));
+                //b.DrawString(Game1.tinyFont, text, position + new Vector2(4f, -8f), Color.DimGray * this.transparency);
+                if (Game1.player.items.Count > (index + 36) && Game1.player.items.ElementAt<Item>((index + 36)) != null)
                 {
-                    this.buttons[toolBarIndex].scale = Math.Max(1f, this.buttons[toolBarIndex].scale - 0.025f);
-                    Vector2 location = new Vector2(
-                        xPositionOnScreen + 16,
-                        (float)(yPositionOnScreen + (toolBarIndex * Game1.tileSize + 16)));
-                    b.Draw(Game1.menuTexture, location, new Rectangle?(Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, Game1.player.CurrentToolIndex == itemIndex ? 56 : 10, -1, -1)), Color.White * transparency);
-                    // Need to customize it for toolset //string text = index == 9 ? "0" : (index == 10 ? "-" : (index == 11 ? "=" : string.Concat((object)(index + 1))));
-                    //b.DrawString(Game1.tinyFont, text, position + new Vector2(4f, -8f), Color.DimGray * this.transparency);
-                    Game1.player.items[itemIndex].drawInMenu(b, location, Game1.player.CurrentToolIndex == itemIndex ? 0.9f : this.buttons.ElementAt<ClickableComponent>(toolBarIndex).scale * 0.8f, this.transparency, 0.88f);
-                    buttons[toolBarIndex].name = string.Concat((object)itemIndex);
+                    Game1.player.items[(index + 36)].drawInMenu(b, location, Game1.player.CurrentToolIndex == (index + 36) ? 0.9f : this.buttons.ElementAt<ClickableComponent>(index).scale * 0.8f, this.transparency, 0.88f);
                     toolBarIndex++;
-                    if (toolBarIndex >= NUM_BUTTONS) break;
                 }
             }
             if (toolBarIndex != numToolsinToolbar)
                 numToolsinToolbar = toolBarIndex;
+
             //If an item is hovered, shows its tooltip.
             if (this.hoverItem == null)
                 return;
