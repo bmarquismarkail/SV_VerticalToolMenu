@@ -126,28 +126,35 @@ namespace SB_VerticalToolMenu
             if (Game1.options.invertScrollDirection)
                 num *= -1;
 
-            currentToolIndex = Game1.player.CurrentToolIndex + num;
-            if (num < 0)
+            while (true)
             {
-                if (currentToolIndex < 0)
+                currentToolIndex += num;
+                if (num < 0)
                 {
-                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name);
+                    if (currentToolIndex < 0)
+                    {
+                        currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name);
+                    }
+                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
+                    {
+                        currentToolIndex = 11;
+                    }
+
                 }
-                else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
+                else if (num > 0)
                 {
-                    currentToolIndex = 11;
+                    if (currentToolIndex > Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name))
+                    {
+                        currentToolIndex = 0;
+                    }
+                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
+                    {
+                        currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
+                    }
                 }
-            }
-            else if (num > 0)
-            {
-                if (currentToolIndex > Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name))
-                {
-                    currentToolIndex = 0;
-                }
-                else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
-                {
-                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
-                }
+
+                if (Game1.player.items[currentToolIndex] != null)
+                    break;
             }
             modOverride = true;
         }
