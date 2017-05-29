@@ -8,6 +8,7 @@ using StardewValley.Menus;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley.Tools;
+using Microsoft.Xna.Framework.Input;
 
 namespace SB_VerticalToolMenu
 {
@@ -69,8 +70,70 @@ namespace SB_VerticalToolMenu
             }
         }
 
-        public override void receiveRightClick(int x, int y, bool playSound = true)
+        public Item rightClick(int x, int y, Item toAddTo, bool playSound = true)
         {
+            foreach (ClickableComponent button in this.buttons)
+            {
+                int int32 = Convert.ToInt32(button.name);
+                int x1 = x;
+                int y1 = y;
+                if (button.containsPoint(x1, y1) && Game1.player.items[int32] != null)
+                {
+                    if (Game1.player.items[int32] is Tool && (toAddTo == null || toAddTo is StardewValley.Object) && (Game1.player.items[int32] as Tool).canThisBeAttached((StardewValley.Object)toAddTo))
+                        return (Item)(Game1.player.items[int32] as Tool).attach(toAddTo == null ? (StardewValley.Object)null : (StardewValley.Object)toAddTo);
+                    if (toAddTo == null)
+                    {
+                        if (Game1.player.items[int32].maximumStackSize() != -1)
+                        {
+                            if (int32 == Game1.player.CurrentToolIndex && Game1.player.items[int32] != null && Game1.player.items[int32].Stack == 1)
+                                Game1.player.items[int32].actionWhenStopBeingHeld(Game1.player);
+                            Item one = Game1.player.items[int32].getOne();
+                            if (Game1.player.items[int32].Stack > 1)
+                            {
+                                if (Game1.isOneOfTheseKeysDown(Game1.oldKBState, new InputButton[1] { new InputButton(Keys.LeftShift) }))
+                                {
+                                    one.Stack = (int)Math.Ceiling((double)Game1.player.items[int32].Stack / 2.0);
+                                    Game1.player.items[int32].Stack = Game1.player.items[int32].Stack / 2;
+                                    goto label_15;
+                                }
+                            }
+                            if (Game1.player.items[int32].Stack == 1)
+                                Game1.player.items[int32] = (Item)null;
+                            else
+                                --Game1.player.items[int32].Stack;
+                            label_15:
+                            if (Game1.player.items[int32] != null && Game1.player.items[int32].Stack <= 0)
+                                Game1.player.items[int32] = (Item)null;
+                            if (playSound)
+                                Game1.playSound("dwop");
+                            return one;
+                        }
+                    }
+                    else if (Game1.player.items[int32].canStackWith(toAddTo) && toAddTo.Stack < toAddTo.maximumStackSize())
+                    {
+                        if (Game1.isOneOfTheseKeysDown(Game1.oldKBState, new InputButton[1] { new InputButton(Keys.LeftShift) }))
+                        {
+                            toAddTo.Stack += (int)Math.Ceiling((double)Game1.player.items[int32].Stack / 2.0);
+                            Game1.player.items[int32].Stack = Game1.player.items[int32].Stack / 2;
+                        }
+                        else
+                        {
+                            ++toAddTo.Stack;
+                            --Game1.player.items[int32].Stack;
+                        }
+                        if (playSound)
+                            Game1.playSound("dwop");
+                        if (Game1.player.items[int32].Stack <= 0)
+                        {
+                            if (int32 == Game1.player.CurrentToolIndex)
+                                Game1.player.items[int32].actionWhenStopBeingHeld(Game1.player);
+                            Game1.player.items[int32] = (Item)null;
+                        }
+                        return toAddTo;
+                    }
+                }
+            }
+            return toAddTo;
         }
 
         public override void performHoverAction(int x, int y)
@@ -199,6 +262,10 @@ namespace SB_VerticalToolMenu
         public static int getInitialHeight()
         {
             return ((Game1.tileSize * NUM_BUTTONS) + (Game1.tileSize / 2));
+        }
+
+        public override void receiveRightClick(int x, int y, bool playSound = true)
+        {
         }
     }
 }

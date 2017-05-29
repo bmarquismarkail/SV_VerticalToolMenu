@@ -18,6 +18,12 @@ namespace SB_VerticalToolMenu
                 true);
         }
 
+        public override void performHoverAction(int x, int y)
+        {
+            verticalToolBar.performHoverAction(x, y);
+            base.performHoverAction(x, y);
+        }
+
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             FieldInfo fieldInfo = typeof(InventoryPage).BaseType.GetField("heldItem", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -73,10 +79,22 @@ namespace SB_VerticalToolMenu
             base.receiveLeftClick(x, y);
         }
 
+        public override void receiveRightClick(int x, int y, bool playSound = true)
+        {
+            if (verticalToolBar.isWithinBounds(x, y))
+            {
+                FieldInfo fieldInfo = typeof(InventoryPage).BaseType.GetField("heldItem", BindingFlags.NonPublic | BindingFlags.Instance);
+                Item heldItem = (Item)fieldInfo.GetValue(this);
+                fieldInfo.SetValue(this, verticalToolBar.rightClick(x, y, heldItem, playSound));
+                return;
+            }
+            base.receiveRightClick(x, y, playSound);
+        }
+
         public override void draw(SpriteBatch b)
         {
-            verticalToolBar.draw(b);
             base.draw(b);
+            verticalToolBar.draw(b);
         }
     }
 }
