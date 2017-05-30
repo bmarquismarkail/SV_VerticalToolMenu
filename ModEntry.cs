@@ -123,7 +123,8 @@ namespace SB_VerticalToolMenu
 
         private void checkHoveredItem(int num)
         {
-            if (Game1.options.invertScrollDirection)
+            if ( !(!Game1.player.UsingTool && !Game1.dialogueUp && ((Game1.pickingTool || Game1.player.CanMove) && (!Game1.player.areAllItemsNull() && !Game1.eventUp))) ) return;
+                if (Game1.options.invertScrollDirection)
                 num *= -1;
 
             while (true)
