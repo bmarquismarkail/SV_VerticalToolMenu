@@ -24,7 +24,6 @@ namespace SB_VerticalToolMenu
             SaveEvents.AfterLoad += initializeMod;
             GameEvents.UpdateTick += checkCurrentTool;
             GameEvents.UpdateTick += checkPolling;
-            GameEvents.UpdateTick += updatePosition;
             ControlEvents.KeyboardChanged += chooseToolKey;
             ControlEvents.MouseChanged += checkHoveredItemMouse;
             ControlEvents.ControllerTriggerPressed += setScrolling;
@@ -186,14 +185,6 @@ namespace SB_VerticalToolMenu
                     currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[4].name);
 
                 modOverride = true;
-            }
-        }
-
-        private void updatePosition(object sender, EventArgs e)
-        {
-            if (isInitiated)
-            {
-                verticalToolbar.xPositionOnScreen = getToolbar().xPositionOnScreen - (verticalToolbar.width / 2);
             }
         }
 

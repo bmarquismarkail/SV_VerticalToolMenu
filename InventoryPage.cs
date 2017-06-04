@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 using System;
@@ -70,7 +71,7 @@ namespace SB_VerticalToolMenu
             }
             if (this.organizeButton.containsPoint(x, y))
             {
-                (Game1.player.items).Sort(0,36, null);
+                (Game1.player.items).Sort(0, 36, null);
                 (Game1.player.items).Reverse(0, 36);
                 Game1.playSound("Ship");
                 return;
@@ -93,6 +94,13 @@ namespace SB_VerticalToolMenu
 
         public override void draw(SpriteBatch b)
         {
+            for (int index = 0; index < VerticalToolBar.NUM_BUTTONS; ++index)
+                verticalToolBar.buttons[index].bounds = new Rectangle(
+                            //TODO: Use more reliable coordinates
+                            verticalToolBar.xPositionOnScreen,
+                            verticalToolBar.yPositionOnScreen + (index * Game1.tileSize),
+                            Game1.tileSize,
+                            Game1.tileSize);
             base.draw(b);
             verticalToolBar.draw(b);
         }

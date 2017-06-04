@@ -40,7 +40,7 @@ namespace SB_VerticalToolMenu
                 this.buttons.Add(
                     new ClickableComponent(
                         new Rectangle(
-                            xPositionOnScreen + 16,
+                            (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4) + 16,
                             this.yPositionOnScreen + (index * Game1.tileSize),
                             Game1.tileSize, 
                             Game1.tileSize),
@@ -178,7 +178,8 @@ namespace SB_VerticalToolMenu
         {
             for (int index = 0; index < NUM_BUTTONS; ++index)
                 buttons[index].bounds = new Rectangle(
-                            xPositionOnScreen + 16,
+                            //TODO: Use more reliable coordinates
+                            Game1.activeClickableMenu is GameMenu ? this.xPositionOnScreen : (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4),
                             this.yPositionOnScreen + (index * Game1.tileSize),
                             Game1.tileSize,
                             Game1.tileSize);
@@ -222,8 +223,9 @@ namespace SB_VerticalToolMenu
             IClickableMenu.drawTextureBox(
                 b, 
                 Game1.menuTexture, 
-                this.toolbarTextSource, 
-                xPositionOnScreen,
+                this.toolbarTextSource,
+                //TODO: Use more reliable coordinates
+                Game1.activeClickableMenu is GameMenu? this.xPositionOnScreen: (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4),
                 this.yPositionOnScreen,
                 Game1.tileSize * 3 / 2,
                 ((Game1.tileSize * NUM_BUTTONS) + (Game1.tileSize / 2)), 
@@ -233,7 +235,8 @@ namespace SB_VerticalToolMenu
             {
                 this.buttons[index].scale = Math.Max(1f, this.buttons[index].scale - 0.025f);
                 Vector2 location = new Vector2(
-                    xPositionOnScreen + 16,
+                    //TODO: Use more reliable coordinates
+                    (Game1.activeClickableMenu is GameMenu ? this.xPositionOnScreen : (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4)) + 16,
                     (float)(this.yPositionOnScreen + (index * Game1.tileSize + 16)));
                 b.Draw(Game1.menuTexture, location, new Rectangle?(Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, Game1.player.CurrentToolIndex == (index + 36) ? 56 : 10, -1, -1)), Color.White * transparency);
                 // Need to customize it for toolset //string text = index == 9 ? "0" : (index == 10 ? "-" : (index == 11 ? "=" : string.Concat((object)(index + 1))));
