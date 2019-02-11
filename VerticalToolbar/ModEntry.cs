@@ -1,13 +1,10 @@
 ﻿using System;
-using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
-using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace SB_VerticalToolMenu
 {
@@ -21,27 +18,64 @@ namespace SB_VerticalToolMenu
         int triggerPolling = 300;
         int released = 0;
 
+        /// <summary>The mod entry point, called after the mod is first loaded.</summary>
+        /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
-            SaveEvents.AfterLoad += initializeMod;
-            GameEvents.UpdateTick += checkCurrentTool;
-            GameEvents.UpdateTick += checkPolling;
-            ControlEvents.KeyboardChanged += chooseToolKey;
-            ControlEvents.MouseChanged += checkHoveredItemMouse;
-            ControlEvents.ControllerTriggerPressed += setScrolling;
-            ControlEvents.ControllerTriggerReleased += unsetScrolling;
-            MenuEvents.MenuChanged += hijackInventoryPage;
+            helper.Events.GameLoop.SaveLoaded += onSaveLoaded;
+            helper.Events.GameLoop.UpdateTicked += onUpdateTicked;
+            helper.Events.Input.MouseWheelScrolled += onMouseWheelScrolled;
+            helper.Events.Input.ButtonPressed += onButtonPressed;
+            helper.Events.Input.ButtonReleased += onButtonReleased;
+            helper.Events.Display.MenuChanged += onMenuChanged;
 
             isInitiated = false;
             modOverride = false;
         }
 
-        private void checkPolling(object sender, EventArgs e)
+        /// <summary>Raised after the game state is updated (≈60 times per second).</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void onUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (isInitiated && verticalToolbar.numToolsinToolbar > 0)
+            if (!isInitiated)
+                return;
+
+            // check input modifier
+            var input = this.Helper.Input;
+            bool modOverride = false;
+            if (!Game1.player.UsingTool && input.IsDown(SButton.LeftControl))
+            {
+                if (input.IsDown(SButton.NumPad1))
+                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
+                else if (input.IsDown(SButton.NumPad2))
+                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[1].name);
+                else if (input.IsDown(SButton.NumPad3))
+                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[2].name);
+                else if (input.IsDown(SButton.NumPad4))
+                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[3].name);
+                else if (input.IsDown(SButton.NumPad5))
+                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[4].name);
+
+                modOverride = true;
+            }
+
+            // check current tool
+            if (verticalToolbar.numToolsinToolbar > 0 && Game1.player.CurrentToolIndex != currentToolIndex)
+            {
+                if (modOverride || (triggerPolling < 300))
+                {
+                    Game1.player.CurrentToolIndex = currentToolIndex;
+                    modOverride = false;
+                }
+            }
+
+            // check polling
+            if (verticalToolbar.numToolsinToolbar > 0)
+            {
                 if (scrolling != 0)
                 {
-                    if ( GamePad.GetState(PlayerIndex.One).IsButtonUp(Buttons.LeftTrigger) && GamePad.GetState(PlayerIndex.One).IsButtonUp(Buttons.RightTrigger)) 
+                    if (!input.IsDown(SButton.LeftTrigger) && !input.IsDown(SButton.RightTrigger))
                     {
                         scrolling = 0;
                         return;
@@ -69,23 +103,36 @@ namespace SB_VerticalToolMenu
                     }
 
                 }
+            }
         }
 
-        private void setScrolling(object sender, EventArgsControllerTriggerPressed e)
+        /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void onButtonPressed(object sender, ButtonPressedEventArgs e)
         {
-            if (!isInitiated) return;
-            if(verticalToolbar.numToolsinToolbar > 0 && (e.PlayerIndex == PlayerIndex.One && e.ButtonPressed == Buttons.LeftTrigger || e.ButtonPressed == Buttons.RightTrigger))
+            if (!isInitiated)
+                return;
+
+            // set scrolling
+            if(verticalToolbar.numToolsinToolbar > 0 && (e.Button == SButton.LeftTrigger || e.Button == SButton.RightTrigger))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
-                int num = e.ButtonPressed == Buttons.LeftTrigger ? -1 : 1;
+                int num = e.Button == SButton.LeftTrigger ? -1 : 1;
                 checkHoveredItem(num);
                 scrolling = num;
             }
         }
 
-        private void unsetScrolling(object sender, EventArgsControllerTriggerReleased e)
+        /// <summary>Raised after the player releases a button on the keyboard, controller, or mouse.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void onButtonReleased(object sender, ButtonReleasedEventArgs e)
         {
-            if (verticalToolbar.numToolsinToolbar > 0 && (e.PlayerIndex == PlayerIndex.One && e.ButtonReleased == Buttons.LeftTrigger || e.ButtonReleased == Buttons.RightTrigger))
+            if (!isInitiated)
+                return;
+
+            if (verticalToolbar.numToolsinToolbar > 0 && (e.Button == SButton.LeftTrigger || e.Button == SButton.RightTrigger))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
                 scrolling = 0;
@@ -94,30 +141,16 @@ namespace SB_VerticalToolMenu
             }
         }
 
-        private void hijackInventoryPage(object sender, EventArgsClickableMenuChanged e)
+        /// <summary>Raised after a game menu is opened, closed, or replaced.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void onMenuChanged(object sender, MenuChangedEventArgs e)
         {
-            if (Game1.activeClickableMenu is GameMenu)
+            if (e.NewMenu is GameMenu menu && menu.currentTab == GameMenu.inventoryTab)
             {
-                GameMenu menu = (GameMenu)Game1.activeClickableMenu;
-                if (menu.currentTab == GameMenu.inventoryTab)
-                {
-                    List<IClickableMenu> pages = (List<IClickableMenu>)typeof(GameMenu).GetField("pages", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(menu);
-                    pages.RemoveAt(0);
-                    pages.Insert(0, new InventoryPage(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height));
-                }
-            }
-        }
-
-        private void checkCurrentTool(object sender, EventArgs e)
-        {
-            if (!isInitiated) return;
-            if (verticalToolbar.numToolsinToolbar > 0 && Game1.player.CurrentToolIndex != currentToolIndex)
-            {
-                if (modOverride || (triggerPolling < 300))
-                {
-                    Game1.player.CurrentToolIndex = currentToolIndex;
-                    modOverride = false;
-                }
+                List<IClickableMenu> pages = this.Helper.Reflection.GetField<List<IClickableMenu>>(menu, "pages").GetValue();
+                pages.RemoveAt(0);
+                pages.Insert(0, new InventoryPage(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height));
             }
         }
 
@@ -154,39 +187,22 @@ namespace SB_VerticalToolMenu
                     }
                 }
 
-                if (Game1.player.items[currentToolIndex] != null)
+                if (Game1.player.Items[currentToolIndex] != null)
                     break;
             }
             modOverride = true;
         }
 
-        private void checkHoveredItemMouse(object sender, EventArgsMouseStateChanged e)
+        /// <summary>Raised after the player scrolls the mouse wheel.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void onMouseWheelScrolled(object sender, MouseWheelScrolledEventArgs e)
         {
-            if (!isInitiated) return;
-            if (verticalToolbar.numToolsinToolbar > 0 && Mouse.GetState().ScrollWheelValue != Game1.oldMouseState.ScrollWheelValue)
-            {
-                int num = Mouse.GetState().ScrollWheelValue > Game1.oldMouseState.ScrollWheelValue ? -1 : 1;
-                checkHoveredItem(num);
-            }
-        }
+            if (!isInitiated)
+                return;
 
-        private void chooseToolKey(object sender, EventArgsKeyboardStateChanged e)
-        {
-            if (!Game1.player.UsingTool && e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftControl))
-            {
-                if (e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftControl) && e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.NumPad1))
-                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
-                else if (e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftControl) && e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.NumPad2))
-                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[1].name);
-                else if (e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftControl) && e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.NumPad3))
-                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[2].name);
-                else if (e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftControl) && e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.NumPad4))
-                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[3].name);
-                else if (e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftControl) && e.NewState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.NumPad5))
-                    currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[4].name);
-
-                modOverride = true;
-            }
+            if (verticalToolbar.numToolsinToolbar > 0)
+                checkHoveredItem(e.Delta);
         }
 
         private Toolbar getToolbar()
@@ -194,7 +210,10 @@ namespace SB_VerticalToolMenu
             return Game1.onScreenMenus.OfType<Toolbar>().FirstOrDefault();
         }
 
-        private void initializeMod(object sender, EventArgs e)
+        /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void onSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             verticalToolbar = new VerticalToolBar(getToolbar().xPositionOnScreen - (VerticalToolBar.getInitialWidth() / 2), Game1.viewport.Height - VerticalToolBar.getInitialHeight());
             Game1.onScreenMenus.Add(verticalToolbar);
