@@ -6,6 +6,7 @@ using StardewValley;
 using StardewValley.Menus;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace SB_VerticalToolMenu
@@ -19,6 +20,7 @@ namespace SB_VerticalToolMenu
         int scrolling;
         int triggerPolling = 300;
         int released = 0;
+
         public override void Entry(IModHelper helper)
         {
             SaveEvents.AfterLoad += initializeMod;
@@ -45,9 +47,8 @@ namespace SB_VerticalToolMenu
                         return;
                     }
                     Game1.player.CurrentToolIndex = currentToolIndex;
-                    int triggerPolling = this.triggerPolling;
-                    int elapasedGameTime1 = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
-                    this.triggerPolling = triggerPolling - elapasedGameTime1;
+                    int elapsedGameTime = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+                    this.triggerPolling -= elapsedGameTime;
                     if(this.triggerPolling <= 0 && !modOverride)
                     {
                         Game1.player.CurrentToolIndex = currentToolIndex;
@@ -190,15 +191,7 @@ namespace SB_VerticalToolMenu
 
         private Toolbar getToolbar()
         {
-            for (int index = 0; index < Game1.onScreenMenus.Count; ++index)
-            {
-                if (Game1.onScreenMenus[index] is Toolbar)
-                {
-                    return Game1.onScreenMenus[index] as Toolbar;
-                }
-            }
-
-            return null;
+            return Game1.onScreenMenus.OfType<Toolbar>().FirstOrDefault();
         }
 
         private void initializeMod(object sender, EventArgs e)

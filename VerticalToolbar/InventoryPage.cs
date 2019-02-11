@@ -3,14 +3,17 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 using System;
-using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SB_VerticalToolMenu
 {
     class InventoryPage : StardewValley.Menus.InventoryPage
     {
-        VerticalToolBar verticalToolBar;
-        public InventoryPage(int x, int y, int width, int height) : base(x, y, width, height)
+        private readonly VerticalToolBar verticalToolBar;
+
+        public InventoryPage(int x, int y, int width, int height)
+            : base(x, y, width, height)
         {
             verticalToolBar = new VerticalToolBar(
                 xPositionOnScreen - IClickableMenu.spaceToClearSideBorder - IClickableMenu.borderWidth * 2,
@@ -27,14 +30,13 @@ namespace SB_VerticalToolMenu
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            FieldInfo fieldInfo = typeof(InventoryPage).BaseType.GetField("heldItem", BindingFlags.NonPublic | BindingFlags.Instance);
-            Item heldItem = (Item)fieldInfo.GetValue(this);
-            for (int i = Game1.player.maxItems; i < StardewValley.Farmer.maxInventorySpace; i++)
+            Item heldItem = Game1.player.CursorSlotItem;
+            for (int i = Game1.player.MaxItems; i < StardewValley.Farmer.maxInventorySpace; i++)
             {
-                if (Game1.player.items[i] != null)
+                if (Game1.player.Items[i] != null)
                 {
-                    fieldInfo.SetValue(this, Game1.player.items[i]);
-                    Game1.player.items[i] = null;
+                    Game1.player.CursorSlotItem = Game1.player.Items[i];
+                    Game1.player.Items[i] = null;
                 }
             }
             foreach (ClickableComponent button in verticalToolBar.buttons)
@@ -43,36 +45,38 @@ namespace SB_VerticalToolMenu
                 {
                     if (heldItem != null)
                     {
-                        if (Game1.player.items[Convert.ToInt32(button.name)] == null || Game1.player.items[Convert.ToInt32(button.name)].canStackWith(heldItem))
+                        if (Game1.player.Items[Convert.ToInt32(button.name)] == null || Game1.player.Items[Convert.ToInt32(button.name)].canStackWith(heldItem))
                         {
-                            if (Game1.player.CurrentToolIndex == Convert.ToInt32(button.name) && heldItem != null)
+                            if (Game1.player.CurrentToolIndex == Convert.ToInt32(button.name))
                                 heldItem.actionWhenBeingHeld(Game1.player);
-                            heldItem = Utility.addItemToInventory(heldItem, Convert.ToInt32(button.name), Game1.player.items, (ItemGrabMenu.behaviorOnItemSelect)null);
-                            fieldInfo.SetValue(this, null);
+                            Utility.addItemToInventory(heldItem, Convert.ToInt32(button.name), Game1.player.Items);
+                            Game1.player.CursorSlotItem = null;
                             Game1.playSound("stoneStep");
                             return;
                         }
-                        if (Game1.player.items[Convert.ToInt32(button.name)] != null)
+                        if (Game1.player.Items[Convert.ToInt32(button.name)] != null)
                         {
-                            Item swapItem = (Item)fieldInfo.GetValue(this);
-                            fieldInfo.SetValue(this, Game1.player.items[Convert.ToInt32(button.name)]);
-                            Utility.addItemToInventory(swapItem, Convert.ToInt32(button.name), Game1.player.items);
+                            Item swapItem = Game1.player.CursorSlotItem;
+                            Game1.player.CursorSlotItem = Game1.player.Items[Convert.ToInt32(button.name)];
+                            Utility.addItemToInventory(swapItem, Convert.ToInt32(button.name), Game1.player.Items);
                             return;
 
                         }
                     }
-                    if (Game1.player.items[Convert.ToInt32(button.name)] != null)
+                    if (Game1.player.Items[Convert.ToInt32(button.name)] != null)
                     {
-                        fieldInfo.SetValue(this, Game1.player.items[Convert.ToInt32(button.name)]);
-                        Utility.removeItemFromInventory(Convert.ToInt32(button.name), Game1.player.items);
+                        Game1.player.CursorSlotItem = Game1.player.Items[Convert.ToInt32(button.name)];
+                        Utility.removeItemFromInventory(Convert.ToInt32(button.name), Game1.player.Items);
                         return;
                     }
                 }
             }
             if (this.organizeButton.containsPoint(x, y))
             {
-                (Game1.player.items).Sort(0, 36, null);
-                (Game1.player.items).Reverse(0, 36);
+                List<Item> items = Game1.player.Items.ToList();
+                items.Sort(0, 36, null);
+                items.Reverse(0, 36);
+                Game1.player.items.Set(items);
                 Game1.playSound("Ship");
                 return;
             }
@@ -84,9 +88,8 @@ namespace SB_VerticalToolMenu
         {
             if (verticalToolBar.isWithinBounds(x, y))
             {
-                FieldInfo fieldInfo = typeof(InventoryPage).BaseType.GetField("heldItem", BindingFlags.NonPublic | BindingFlags.Instance);
-                Item heldItem = (Item)fieldInfo.GetValue(this);
-                fieldInfo.SetValue(this, verticalToolBar.rightClick(x, y, heldItem, playSound));
+                Item heldItem = Game1.player.CursorSlotItem;
+                Game1.player.CursorSlotItem = verticalToolBar.rightClick(x, y, heldItem, playSound);
                 return;
             }
             base.receiveRightClick(x, y, playSound);
