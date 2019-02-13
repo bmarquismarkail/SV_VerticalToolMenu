@@ -5,23 +5,27 @@ using StardewValley;
 using StardewValley.Menus;
 using System.Collections.Generic;
 using System.Linq;
+using SB_VerticalToolMenu.Framework;
 
 namespace SB_VerticalToolMenu
 {
-
-    public class ModEntry : Mod
+    internal class ModEntry : Mod
     {
-        VerticalToolBar verticalToolbar;
-        bool isInitiated, modOverride;
-        int currentToolIndex;
-        int scrolling;
-        int triggerPolling = 300;
-        int released = 0;
+        /// <summary>The mod configuration.</summary>
+        private ModConfig Config;
+        private VerticalToolBar verticalToolbar;
+        private bool isInitiated, modOverride;
+        private int currentToolIndex;
+        private int scrolling;
+        private int triggerPolling = 300;
+        private int released = 0;
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
+            Config = helper.ReadConfig<ModConfig>();
+
             helper.Events.GameLoop.SaveLoaded += onSaveLoaded;
             helper.Events.GameLoop.UpdateTicked += onUpdateTicked;
             helper.Events.Input.MouseWheelScrolled += onMouseWheelScrolled;
@@ -43,18 +47,18 @@ namespace SB_VerticalToolMenu
 
             // check input modifier
             var input = this.Helper.Input;
-            bool modOverride = false;
-            if (!Game1.player.UsingTool && input.IsDown(SButton.LeftControl))
+            modOverride = false;
+            if (!Game1.player.UsingTool && input.IsDown(Config.Controls.HoldToActivateSlotKeys))
             {
-                if (input.IsDown(SButton.NumPad1))
+                if (input.IsDown(Config.Controls.ChooseSlot1))
                     currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
-                else if (input.IsDown(SButton.NumPad2))
+                else if (input.IsDown(Config.Controls.ChooseSlot2))
                     currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[1].name);
-                else if (input.IsDown(SButton.NumPad3))
+                else if (input.IsDown(Config.Controls.ChooseSlot3))
                     currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[2].name);
-                else if (input.IsDown(SButton.NumPad4))
+                else if (input.IsDown(Config.Controls.ChooseSlot4))
                     currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[3].name);
-                else if (input.IsDown(SButton.NumPad5))
+                else if (input.IsDown(Config.Controls.ChooseSlot5))
                     currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[4].name);
 
                 modOverride = true;
@@ -75,7 +79,7 @@ namespace SB_VerticalToolMenu
             {
                 if (scrolling != 0)
                 {
-                    if (!input.IsDown(SButton.LeftTrigger) && !input.IsDown(SButton.RightTrigger))
+                    if (!input.IsDown(this.Config.Controls.ScrollLeft) && !input.IsDown(this.Config.Controls.ScrollRight))
                     {
                         scrolling = 0;
                         return;
@@ -115,10 +119,10 @@ namespace SB_VerticalToolMenu
                 return;
 
             // set scrolling
-            if(verticalToolbar.numToolsinToolbar > 0 && (e.Button == SButton.LeftTrigger || e.Button == SButton.RightTrigger))
+            if(verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
-                int num = e.Button == SButton.LeftTrigger ? -1 : 1;
+                int num = e.Button == this.Config.Controls.ScrollLeft ? -1 : 1;
                 checkHoveredItem(num);
                 scrolling = num;
             }
@@ -132,7 +136,7 @@ namespace SB_VerticalToolMenu
             if (!isInitiated)
                 return;
 
-            if (verticalToolbar.numToolsinToolbar > 0 && (e.Button == SButton.LeftTrigger || e.Button == SButton.RightTrigger))
+            if (verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
                 scrolling = 0;
@@ -150,7 +154,7 @@ namespace SB_VerticalToolMenu
             {
                 List<IClickableMenu> pages = this.Helper.Reflection.GetField<List<IClickableMenu>>(menu, "pages").GetValue();
                 pages.RemoveAt(0);
-                pages.Insert(0, new InventoryPage(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height));
+                pages.Insert(0, new ModInventoryPage(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height));
             }
         }
 

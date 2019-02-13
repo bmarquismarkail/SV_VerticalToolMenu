@@ -44,10 +44,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InventoryPage.cs" />
+    <Compile Include="Framework\ModConfig.cs" />
+    <Compile Include="Framework\ModControlsConfig.cs" />
+    <Compile Include="Framework\ModInventoryPage.cs" />
+    <Compile Include="Framework\VerticalToolBar.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="VerticalToolBar.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="manifest.json" />

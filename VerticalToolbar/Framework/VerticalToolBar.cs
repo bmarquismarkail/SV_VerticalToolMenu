@@ -8,9 +8,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using SObject = StardewValley.Object;
 
-namespace SB_VerticalToolMenu
+namespace SB_VerticalToolMenu.Framework
 {
-    class VerticalToolBar : IClickableMenu
+    internal class VerticalToolBar : IClickableMenu
     {
         public List<ClickableComponent> buttons = new List<ClickableComponent>();
         public static int NUM_BUTTONS = 5;

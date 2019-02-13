@@ -6,13 +6,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SB_VerticalToolMenu
+namespace SB_VerticalToolMenu.Framework
 {
-    class InventoryPage : StardewValley.Menus.InventoryPage
+    internal class ModInventoryPage : StardewValley.Menus.InventoryPage
     {
         private readonly VerticalToolBar verticalToolBar;
 
-        public InventoryPage(int x, int y, int width, int height)
+        public ModInventoryPage(int x, int y, int width, int height)
             : base(x, y, width, height)
         {
             verticalToolBar = new VerticalToolBar(
