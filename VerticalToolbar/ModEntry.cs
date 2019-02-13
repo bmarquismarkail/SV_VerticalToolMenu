@@ -206,7 +206,7 @@ namespace SB_VerticalToolMenu
                 return;
 
             if (verticalToolbar.numToolsinToolbar > 0)
-                checkHoveredItem(e.Delta);
+                checkHoveredItem(e.Delta > 0 ? 1 : -1);
         }
 
         private Toolbar getToolbar()
