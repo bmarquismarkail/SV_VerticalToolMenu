@@ -76,7 +76,7 @@ namespace SB_VerticalToolMenu.Framework
                 List<Item> items = Game1.player.Items.ToList();
                 items.Sort(0, 36, null);
                 items.Reverse(0, 36);
-                Game1.player.items.Set(items);
+                Game1.player.Items = items;
                 Game1.playSound("Ship");
                 return;
             }
