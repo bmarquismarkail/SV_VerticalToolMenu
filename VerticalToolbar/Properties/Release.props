@@ -1,5 +1,5 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<ImportGroup Label="PropertySheets" />
+  <ImportGroup Label="PropertySheets" />
   <PropertyGroup>
     <!-- Enable game debugging only for the Debug configuration -->
     <EnableGameDebugging Condition="$(Configuration) == 'Debug'">true</EnableGameDebugging>

@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using SB_VerticalToolMenu.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
-using System.Collections.Generic;
-using System.Linq;
-using SB_VerticalToolMenu.Framework;
 
 namespace SB_VerticalToolMenu
 {
@@ -13,12 +13,13 @@ namespace SB_VerticalToolMenu
     {
         /// <summary>The mod configuration.</summary>
         private ModConfig Config;
-        private VerticalToolBar verticalToolbar;
-        private bool isInitiated, modOverride;
+
         private int currentToolIndex;
+        private bool isInitiated, modOverride;
+        private int released;
         private int scrolling;
         private int triggerPolling = 300;
-        private int released = 0;
+        private VerticalToolBar verticalToolbar;
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
@@ -46,7 +47,7 @@ namespace SB_VerticalToolMenu
                 return;
 
             // check input modifier
-            var input = this.Helper.Input;
+            var input = Helper.Input;
             modOverride = false;
             if (!Game1.player.UsingTool && input.IsDown(Config.Controls.HoldToActivateSlotKeys))
             {
@@ -66,46 +67,44 @@ namespace SB_VerticalToolMenu
 
             // check current tool
             if (verticalToolbar.numToolsinToolbar > 0 && Game1.player.CurrentToolIndex != currentToolIndex)
-            {
-                if (modOverride || (triggerPolling < 300))
+                if (modOverride || triggerPolling < 300)
                 {
                     Game1.player.CurrentToolIndex = currentToolIndex;
                     modOverride = false;
                 }
-            }
 
             // check polling
             if (verticalToolbar.numToolsinToolbar > 0)
             {
                 if (scrolling != 0)
                 {
-                    if (!input.IsDown(this.Config.Controls.ScrollLeft) && !input.IsDown(this.Config.Controls.ScrollRight))
+                    if (!input.IsDown(Config.Controls.ScrollLeft) && !input.IsDown(Config.Controls.ScrollRight))
                     {
                         scrolling = 0;
                         return;
                     }
+
                     Game1.player.CurrentToolIndex = currentToolIndex;
-                    int elapsedGameTime = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
-                    this.triggerPolling -= elapsedGameTime;
-                    if(this.triggerPolling <= 0 && !modOverride)
+                    var elapsedGameTime = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+                    triggerPolling -= elapsedGameTime;
+                    if (triggerPolling <= 0 && !modOverride)
                     {
                         Game1.player.CurrentToolIndex = currentToolIndex;
-                        this.triggerPolling = 100;
+                        triggerPolling = 100;
                         checkHoveredItem(scrolling);
                     }
                 }
                 else if (released < 300)
                 {
                     Game1.player.CurrentToolIndex = currentToolIndex;
-                    int polling = this.released;
-                    int elapsedGameTime = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
-                    this.released = polling + elapsedGameTime;
+                    var polling = released;
+                    var elapsedGameTime = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+                    released = polling + elapsedGameTime;
                     if (released > 300 && !modOverride)
                     {
                         Game1.player.CurrentToolIndex = currentToolIndex;
                         released = 300;
                     }
-
                 }
             }
         }
@@ -119,10 +118,11 @@ namespace SB_VerticalToolMenu
                 return;
 
             // set scrolling
-            if(verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
+            if (verticalToolbar.numToolsinToolbar > 0 &&
+                (e.Button == Config.Controls.ScrollLeft || e.Button == Config.Controls.ScrollRight))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
-                int num = e.Button == this.Config.Controls.ScrollLeft ? -1 : 1;
+                var num = e.Button == Config.Controls.ScrollLeft ? -1 : 1;
                 checkHoveredItem(num);
                 scrolling = num;
             }
@@ -136,7 +136,8 @@ namespace SB_VerticalToolMenu
             if (!isInitiated)
                 return;
 
-            if (verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
+            if (verticalToolbar.numToolsinToolbar > 0 &&
+                (e.Button == Config.Controls.ScrollLeft || e.Button == Config.Controls.ScrollRight))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
                 scrolling = 0;
@@ -152,16 +153,18 @@ namespace SB_VerticalToolMenu
         {
             if (e.NewMenu is GameMenu menu && menu.currentTab == GameMenu.inventoryTab)
             {
-                List<IClickableMenu> pages = this.Helper.Reflection.GetField<List<IClickableMenu>>(menu, "pages").GetValue();
+                var pages = Helper.Reflection.GetField<List<IClickableMenu>>(menu, "pages").GetValue();
                 pages.RemoveAt(0);
-                pages.Insert(0, new ModInventoryPage(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height));
+                pages.Insert(0,
+                    new ModInventoryPage(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height));
             }
         }
 
         private void checkHoveredItem(int num)
         {
-            if ( !(!Game1.player.UsingTool && !Game1.dialogueUp && ((Game1.pickingTool || Game1.player.CanMove) && (!Game1.player.areAllItemsNull() && !Game1.eventUp))) ) return;
-                if (Game1.options.invertScrollDirection)
+            if (!(!Game1.player.UsingTool && !Game1.dialogueUp && (Game1.pickingTool || Game1.player.CanMove) &&
+                  !Game1.player.areAllItemsNull() && !Game1.eventUp)) return;
+            if (Game1.options.invertScrollDirection)
                 num *= -1;
 
             while (true)
@@ -170,30 +173,25 @@ namespace SB_VerticalToolMenu
                 if (num < 0)
                 {
                     if (currentToolIndex < 0)
-                    {
-                        currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name);
-                    }
-                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
-                    {
-                        currentToolIndex = 11;
-                    }
-
+                        currentToolIndex =
+                            Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name);
+                    else if (currentToolIndex > 11 &&
+                             currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name)) currentToolIndex = 11;
                 }
                 else if (num > 0)
                 {
-                    if (currentToolIndex > Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name))
-                    {
+                    if (currentToolIndex >
+                        Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name))
                         currentToolIndex = 0;
-                    }
-                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
-                    {
+                    else if (currentToolIndex > 11 &&
+                             currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
                         currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
-                    }
                 }
 
                 if (Game1.player.Items[currentToolIndex] != null)
                     break;
             }
+
             modOverride = true;
         }
 
@@ -219,7 +217,9 @@ namespace SB_VerticalToolMenu
         /// <param name="e">The event data.</param>
         private void onSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
-            verticalToolbar = new VerticalToolBar(getToolbar().xPositionOnScreen - (VerticalToolBar.getInitialWidth() / 2), Game1.viewport.Height - VerticalToolBar.getInitialHeight());
+            verticalToolbar =
+                new VerticalToolBar(getToolbar().xPositionOnScreen - VerticalToolBar.getInitialWidth() / 2,
+                    Game1.viewport.Height - VerticalToolBar.getInitialHeight());
             Game1.onScreenMenus.Add(verticalToolbar);
 
             currentToolIndex = Game1.player.CurrentToolIndex;
