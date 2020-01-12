@@ -45,11 +45,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="manifest.json" />
+    <None Include="Properties\Release.props" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig">
       <Version>3.0.0</Version>
     </PackageReference>
   </ItemGroup>
+  <Import Project="$(SolutionDir)GenerateManifest.targets" Condition="Exists('$(SolutionDir)GenerateManifest.targets')" />
+  <Import Project="$(ProjectDir)Properties\Release.props" Condition="Exists('$(ProjectDir)Properties\Release.props')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
