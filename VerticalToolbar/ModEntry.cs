@@ -65,7 +65,7 @@ namespace SB_VerticalToolMenu
             }
 
             // check current tool
-            if (verticalToolbar.numToolsinToolbar > 0 && Game1.player.CurrentToolIndex != currentToolIndex)
+            if (verticalToolbar.numToolsInToolbar > 0 && Game1.player.CurrentToolIndex != currentToolIndex)
             {
                 if (modOverride || (triggerPolling < 300))
                 {
@@ -75,7 +75,7 @@ namespace SB_VerticalToolMenu
             }
 
             // check polling
-            if (verticalToolbar.numToolsinToolbar > 0)
+            if (verticalToolbar.numToolsInToolbar > 0)
             {
                 if (scrolling != 0)
                 {
@@ -119,12 +119,20 @@ namespace SB_VerticalToolMenu
                 return;
 
             // set scrolling
-            if(verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
+            if(verticalToolbar.numToolsInToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
             {
+                this.Helper.Input.Suppress(e.Button);
                 Game1.player.CurrentToolIndex = currentToolIndex;
                 int num = e.Button == this.Config.Controls.ScrollLeft ? -1 : 1;
                 checkHoveredItem(num);
                 scrolling = num;
+            }
+
+            //set sorting
+            if (e.Button == (SButton)Game1.options.toolbarSwap[0].key)
+            {
+                this.Helper.Input.Suppress(e.Button);
+                ModShiftToolbar(this.Helper.Input.IsDown(SButton.LeftControl));
             }
         }
 
@@ -136,7 +144,7 @@ namespace SB_VerticalToolMenu
             if (!isInitiated)
                 return;
 
-            if (verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
+            if (verticalToolbar.numToolsInToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
                 scrolling = 0;
@@ -171,7 +179,7 @@ namespace SB_VerticalToolMenu
                 {
                     if (currentToolIndex < 0)
                     {
-                        currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name);
+                        currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsInToolbar - 1].name);
                     }
                     else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
                     {
@@ -181,7 +189,7 @@ namespace SB_VerticalToolMenu
                 }
                 else if (num > 0)
                 {
-                    if (currentToolIndex > Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name))
+                    if (currentToolIndex > Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsInToolbar - 1].name))
                     {
                         currentToolIndex = 0;
                     }
@@ -205,7 +213,7 @@ namespace SB_VerticalToolMenu
             if (!isInitiated)
                 return;
 
-            if (verticalToolbar.numToolsinToolbar > 0)
+            if (verticalToolbar.numToolsInToolbar > 0)
                 checkHoveredItem(e.Delta > 0 ? 1 : -1);
         }
 
@@ -224,6 +232,41 @@ namespace SB_VerticalToolMenu
 
             currentToolIndex = Game1.player.CurrentToolIndex;
             isInitiated = true;
+        }
+
+        private void ModShiftToolbar(bool right)
+        {
+            // This is simply shiftToolbar, but modified to not use NetCode, and taking to account the vertical toolbar
+            if (Game1.player.Items == null || Game1.player.Items.Count < 12 || (Game1.player.UsingTool || Game1.dialogueUp) || (!Game1.pickingTool && !Game1.player.CanMove || (Game1.player.areAllItemsNull() || Game1.eventUp)) || Game1.farmEvent != null)
+                return;
+            Game1.playSound("shwip");
+            if (Game1.player.CurrentItem != null)
+                Game1.player.CurrentItem.actionWhenStopBeingHeld(Game1.player);
+            if (right)
+            {
+                List<Item> range = Game1.player.Items.ToList().GetRange(0,12);
+                range.AddRange(Game1.player.Items.ToList().GetRange(12, 24 + VerticalToolBar.NUM_BUTTONS));
+                Game1.player.setInventory(range);
+            }
+            else
+            {
+                List<Item> range = Game1.player.Items.ToList().GetRange(36 - 12, 12);
+                for (int index = 0; index < 36 - 12; ++index)
+                    range.Add(Game1.player.Items[index]);
+                range.AddRange(Game1.player.Items.ToList().GetRange(36, VerticalToolBar.NUM_BUTTONS));
+                Game1.player.setInventory(range);
+            }
+            Game1.player.netItemStowed.Set(false);
+            if (Game1.player.CurrentItem != null)
+                Game1.player.CurrentItem.actionWhenBeingHeld(Game1.player);
+            for (int index = 0; index < Game1.onScreenMenus.Count; ++index)
+            {
+                if (Game1.onScreenMenus[index] is Toolbar)
+                {
+                    (Game1.onScreenMenus[index] as Toolbar).shifted(right);
+                    break;
+                }
+            }
         }
     }
 }
