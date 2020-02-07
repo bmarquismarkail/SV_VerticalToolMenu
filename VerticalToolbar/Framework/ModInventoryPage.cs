@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Menus;
 using System;
@@ -75,8 +75,7 @@ namespace SB_VerticalToolMenu.Framework
                 List<Item> items = Game1.player.Items.ToList();
                 items.Sort(0, 36, null);
                 items.Reverse(0, 36);
-                //Game1.player.items.Set(items);
-                Game1.player.Items = items;
+                Game1.player.setInventory(items);
                 Game1.playSound("Ship");
                 return;
             }
@@ -89,7 +88,7 @@ namespace SB_VerticalToolMenu.Framework
             if (verticalToolBar.isWithinBounds(x, y))
             {
                 Item heldItem = Game1.player.CursorSlotItem;
-                Game1.player.CursorSlotItem = verticalToolBar.rightClick(x, y, heldItem, playSound);
+                Game1.player.CursorSlotItem = verticalToolBar.RightClick(x, y, heldItem, playSound);
                 return;
             }
             base.receiveRightClick(x, y, playSound);

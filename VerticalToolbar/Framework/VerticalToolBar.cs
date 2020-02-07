@@ -17,7 +17,7 @@ namespace SB_VerticalToolMenu.Framework
         private string hoverTitle = "";
         private float transparency = 1f;
         public Rectangle toolbarTextSource = new Rectangle(0, 256, 60, 60);
-        public int numToolsinToolbar = 0;
+        public int numToolsInToolbar = 0;
         private Item hoverItem;
         public bool forceDraw = false;
 
@@ -68,7 +68,7 @@ namespace SB_VerticalToolMenu.Framework
             }
         }
 
-        public Item rightClick(int x, int y, Item toAddTo, bool playSound = true)
+        public Item RightClick(int x, int y, Item toAddTo, bool playSound = true)
         {
             foreach (ClickableComponent button in this.buttons)
             {
@@ -246,8 +246,8 @@ namespace SB_VerticalToolMenu.Framework
                     toolBarIndex++;
                 }
             }
-            if (toolBarIndex != numToolsinToolbar)
-                numToolsinToolbar = toolBarIndex;
+            if (toolBarIndex != numToolsInToolbar)
+                numToolsInToolbar = toolBarIndex;
 
             //If an item is hovered, shows its tooltip.
             if (this.hoverItem == null)
