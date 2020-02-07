@@ -87,7 +87,7 @@ namespace SB_VerticalToolMenu
                     Game1.player.CurrentToolIndex = currentToolIndex;
                     int elapsedGameTime = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
                     this.triggerPolling -= elapsedGameTime;
-                    if(this.triggerPolling <= 0 && !modOverride)
+                    if (this.triggerPolling <= 0 && !modOverride)
                     {
                         Game1.player.CurrentToolIndex = currentToolIndex;
                         this.triggerPolling = 100;
@@ -119,7 +119,7 @@ namespace SB_VerticalToolMenu
                 return;
 
             // set scrolling
-            if(verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
+            if (verticalToolbar.numToolsinToolbar > 0 && (e.Button == this.Config.Controls.ScrollLeft || e.Button == this.Config.Controls.ScrollRight))
             {
                 Game1.player.CurrentToolIndex = currentToolIndex;
                 int num = e.Button == this.Config.Controls.ScrollLeft ? -1 : 1;
@@ -160,8 +160,10 @@ namespace SB_VerticalToolMenu
 
         private void checkHoveredItem(int num)
         {
-            if ( !(!Game1.player.UsingTool && !Game1.dialogueUp && ((Game1.pickingTool || Game1.player.CanMove) && (!Game1.player.areAllItemsNull() && !Game1.eventUp))) ) return;
-                if (Game1.options.invertScrollDirection)
+            int MAXcurrentToolIndex = 11;
+
+            if (!(!Game1.player.UsingTool && !Game1.dialogueUp && ((Game1.pickingTool || Game1.player.CanMove) && (!Game1.player.areAllItemsNull() && !Game1.eventUp)))) return;
+            if (Game1.options.invertScrollDirection)
                 num *= -1;
 
             while (true)
@@ -173,9 +175,9 @@ namespace SB_VerticalToolMenu
                     {
                         currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsinToolbar - 1].name);
                     }
-                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
+                    else if (currentToolIndex > MAXcurrentToolIndex && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
                     {
-                        currentToolIndex = 11;
+                        currentToolIndex = MAXcurrentToolIndex;
                     }
 
                 }
@@ -185,7 +187,7 @@ namespace SB_VerticalToolMenu
                     {
                         currentToolIndex = 0;
                     }
-                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
+                    else if (currentToolIndex > MAXcurrentToolIndex && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
                     {
                         currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
                     }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 using System;
@@ -76,7 +75,8 @@ namespace SB_VerticalToolMenu.Framework
                 List<Item> items = Game1.player.Items.ToList();
                 items.Sort(0, 36, null);
                 items.Reverse(0, 36);
-                Game1.player.items.Set(items);
+                //Game1.player.items.Set(items);
+                Game1.player.Items = items;
                 Game1.playSound("Ship");
                 return;
             }
@@ -95,7 +95,7 @@ namespace SB_VerticalToolMenu.Framework
             base.receiveRightClick(x, y, playSound);
         }
 
-        public override void draw(SpriteBatch b)
+        public override void draw(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
         {
             for (int index = 0; index < VerticalToolBar.NUM_BUTTONS; ++index)
                 verticalToolBar.buttons[index].bounds = new Rectangle(
