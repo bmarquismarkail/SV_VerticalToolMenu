@@ -20,6 +20,7 @@ namespace SB_VerticalToolMenu.Framework
         public int numToolsInToolbar = 0;
         private Item hoverItem;
         public bool forceDraw = false;
+        private readonly int baseMaxItems = Game1.player.MaxItems;
 
         public VerticalToolBar(int x, int y, int numButtons = 5, bool forceDraw = false)
             : base(x, y, 
@@ -28,7 +29,9 @@ namespace SB_VerticalToolMenu.Framework
         {
             NUM_BUTTONS = numButtons;
             this.forceDraw = forceDraw;
-            for (int count = Game1.player.Items.Count; count < (36 + VerticalToolBar.NUM_BUTTONS); count++)
+            // For compatibility with Bigger Backpack
+            int newInventory = baseMaxItems + VerticalToolBar.NUM_BUTTONS;
+            for (int count = Game1.player.Items.Count; count < newInventory; count++)
             {
                 Game1.player.Items.Add(null);
             }
@@ -42,7 +45,7 @@ namespace SB_VerticalToolMenu.Framework
                             this.yPositionOnScreen + (index * Game1.tileSize),
                             Game1.tileSize, 
                             Game1.tileSize),
-                        string.Concat(index + 36)));
+                        string.Concat(index + baseMaxItems)));
             }
         }
 
@@ -237,14 +240,15 @@ namespace SB_VerticalToolMenu.Framework
                     //TODO: Use more reliable coordinates
                     (Game1.activeClickableMenu is GameMenu ? this.xPositionOnScreen : (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4)) + 16,
                     this.yPositionOnScreen + (index * Game1.tileSize + 16));
-                b.Draw(Game1.menuTexture, location, new Rectangle?(Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, Game1.player.CurrentToolIndex == (index + 36) ? 56 : 10)), Color.White * transparency);
+                b.Draw(Game1.menuTexture, location, new Rectangle?(Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, Game1.player.CurrentToolIndex == (index + baseMaxItems) ? 56 : 10)), Color.White * transparency);
                 // Need to customize it for toolset //string text = index == 9 ? "0" : (index == 10 ? "-" : (index == 11 ? "=" : string.Concat((object)(index + 1))));
                 //b.DrawString(Game1.tinyFont, text, position + new Vector2(4f, -8f), Color.DimGray * this.transparency);
-                if (Game1.player.Items.Count > (index + 36) && Game1.player.Items.ElementAt<Item>((index + 36)) != null)
+                if (Game1.player.Items.Count <= (index + baseMaxItems) || Game1.player.Items.ElementAt<Item>((index + baseMaxItems)) == null)
                 {
-                    Game1.player.Items[(index + 36)].drawInMenu(b, location, Game1.player.CurrentToolIndex == (index + 36) ? 0.9f : this.buttons.ElementAt<ClickableComponent>(index).scale * 0.8f, this.transparency, 0.88f);
-                    toolBarIndex++;
+                    continue;
                 }
+                Game1.player.Items[(index + baseMaxItems)].drawInMenu(b, location, Game1.player.CurrentToolIndex == (index + baseMaxItems) ? 0.9f : this.buttons.ElementAt<ClickableComponent>(index).scale * 0.8f, this.transparency, 0.88f);
+                toolBarIndex++;
             }
             if (toolBarIndex != numToolsInToolbar)
                 numToolsInToolbar = toolBarIndex;

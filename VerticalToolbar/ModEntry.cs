@@ -19,6 +19,7 @@ namespace SB_VerticalToolMenu
         private int scrolling;
         private int triggerPolling = 300;
         private int released = 0;
+        private int baseMaxItems;
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
@@ -32,9 +33,15 @@ namespace SB_VerticalToolMenu
             helper.Events.Input.ButtonPressed += onButtonPressed;
             helper.Events.Input.ButtonReleased += onButtonReleased;
             helper.Events.Display.MenuChanged += onMenuChanged;
+            helper.Events.GameLoop.ReturnedToTitle += onReturnToTitle;
 
             isInitiated = false;
             modOverride = false;
+        }
+
+        private void onReturnToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            isInitiated = false;
         }
 
         /// <summary>Raised after the game state is updated (≈60 times per second).</summary>
@@ -227,6 +234,7 @@ namespace SB_VerticalToolMenu
         /// <param name="e">The event data.</param>
         private void onSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
+            baseMaxItems = Game1.player.MaxItems;
             verticalToolbar = new VerticalToolBar(getToolbar().xPositionOnScreen - (VerticalToolBar.getInitialWidth() / 2), Game1.viewport.Height - VerticalToolBar.getInitialHeight());
             Game1.onScreenMenus.Add(verticalToolbar);
 
@@ -244,16 +252,17 @@ namespace SB_VerticalToolMenu
                 Game1.player.CurrentItem.actionWhenStopBeingHeld(Game1.player);
             if (right)
             {
-                List<Item> range = Game1.player.Items.ToList().GetRange(0,12);
-                range.AddRange(Game1.player.Items.ToList().GetRange(12, 24 + VerticalToolBar.NUM_BUTTONS));
+                List<Item> range = Game1.player.Items.ToList().GetRange(12,baseMaxItems - 12);
+                range.AddRange(Game1.player.Items.ToList().GetRange(0, 12));
+                range.AddRange(Game1.player.Items.ToList().GetRange(baseMaxItems, VerticalToolBar.NUM_BUTTONS));
                 Game1.player.setInventory(range);
             }
             else
             {
-                List<Item> range = Game1.player.Items.ToList().GetRange(36 - 12, 12);
-                for (int index = 0; index < 36 - 12; ++index)
+                List<Item> range = Game1.player.Items.ToList().GetRange(baseMaxItems - 12, 12);
+                for (int index = 0; index < baseMaxItems - 12; ++index)
                     range.Add(Game1.player.Items[index]);
-                range.AddRange(Game1.player.Items.ToList().GetRange(36, VerticalToolBar.NUM_BUTTONS));
+                range.AddRange(Game1.player.Items.ToList().GetRange(baseMaxItems, VerticalToolBar.NUM_BUTTONS));
                 Game1.player.setInventory(range);
             }
             Game1.player.netItemStowed.Set(false);

@@ -74,8 +74,8 @@ namespace SB_VerticalToolMenu.Framework
             if (this.organizeButton.containsPoint(x, y))
             {
                 List<Item> items = Game1.player.Items.ToList();
-                items.Sort(0, 36, null);
-                items.Reverse(0, 36);
+                items.Sort(0, Game1.player.MaxItems, null);
+                items.Reverse(0, Game1.player.MaxItems);
                 Game1.player.setInventory(items);
                 Game1.playSound("Ship");
                 return;
