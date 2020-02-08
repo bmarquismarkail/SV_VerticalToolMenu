@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Menus;
 using System;
@@ -95,7 +94,7 @@ namespace SB_VerticalToolMenu.Framework
             base.receiveRightClick(x, y, playSound);
         }
 
-        public override void draw(SpriteBatch b)
+        public override void draw(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
         {
             for (int index = 0; index < VerticalToolBar.NUM_BUTTONS; ++index)
                 verticalToolBar.buttons[index].bounds = new Rectangle(
