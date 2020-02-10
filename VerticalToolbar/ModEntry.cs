@@ -14,6 +14,7 @@ namespace SB_VerticalToolMenu
         /// <summary>The mod configuration.</summary>
         private ModConfig Config;
         private VerticalToolBar verticalToolbar;
+        SB_VerticalToolMenu.Framework.Orientation Orientation;
         private bool isInitiated, modOverride;
         private int currentToolIndex;
         private int scrolling;
@@ -37,6 +38,7 @@ namespace SB_VerticalToolMenu
 
             isInitiated = false;
             modOverride = false;
+            Orientation = Config.Controls.Orientation;
         }
 
         private void onReturnToTitle(object sender, ReturnedToTitleEventArgs e)
@@ -226,18 +228,13 @@ namespace SB_VerticalToolMenu
                 checkHoveredItem(e.Delta > 0 ? 1 : -1);
         }
 
-        private Toolbar getToolbar()
-        {
-            return Game1.onScreenMenus.OfType<Toolbar>().FirstOrDefault();
-        }
-
         /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event data.</param>
         private void onSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             baseMaxItems = Game1.player.MaxItems;
-            verticalToolbar = new VerticalToolBar(getToolbar().xPositionOnScreen - (VerticalToolBar.getInitialWidth() / 2), Game1.viewport.Height - VerticalToolBar.getInitialHeight());
+            verticalToolbar = new VerticalToolBar(this.Orientation);
             Game1.onScreenMenus.Add(verticalToolbar);
 
             currentToolIndex = Game1.player.CurrentToolIndex;

@@ -15,10 +15,13 @@ namespace SB_VerticalToolMenu.Framework
             : base(x, y, width, height)
         {
             verticalToolBar = new VerticalToolBar(
-                xPositionOnScreen - IClickableMenu.spaceToClearSideBorder - IClickableMenu.borderWidth * 2,
-                yPositionOnScreen + IClickableMenu.spaceToClearTopBorder - IClickableMenu.borderWidth / 2 + 4,
+                Orientation.LeftOfToolbar,
                 VerticalToolBar.NUM_BUTTONS,
-                true);
+                true)
+            {
+                xPositionOnScreen = this.xPositionOnScreen - IClickableMenu.spaceToClearSideBorder - IClickableMenu.borderWidth * 2,
+                yPositionOnScreen = this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder - IClickableMenu.borderWidth / 2 + 4
+            };
         }
 
         public override void performHoverAction(int x, int y)
