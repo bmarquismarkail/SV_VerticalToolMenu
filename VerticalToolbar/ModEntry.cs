@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -19,6 +19,7 @@ namespace SB_VerticalToolMenu
         private int scrolling;
         private int triggerPolling = 300;
         private int released = 0;
+        private int baseMaxItems;
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
@@ -32,9 +33,15 @@ namespace SB_VerticalToolMenu
             helper.Events.Input.ButtonPressed += onButtonPressed;
             helper.Events.Input.ButtonReleased += onButtonReleased;
             helper.Events.Display.MenuChanged += onMenuChanged;
+            helper.Events.GameLoop.ReturnedToTitle += onReturnToTitle;
 
             isInitiated = false;
             modOverride = false;
+        }
+
+        private void onReturnToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            isInitiated = false;
         }
 
         /// <summary>Raised after the game state is updated (≈60 times per second).</summary>
@@ -87,7 +94,7 @@ namespace SB_VerticalToolMenu
                     Game1.player.CurrentToolIndex = currentToolIndex;
                     int elapsedGameTime = Game1.currentGameTime.ElapsedGameTime.Milliseconds;
                     this.triggerPolling -= elapsedGameTime;
-                    if(this.triggerPolling <= 0 && !modOverride)
+                    if (this.triggerPolling <= 0 && !modOverride)
                     {
                         Game1.player.CurrentToolIndex = currentToolIndex;
                         this.triggerPolling = 100;
@@ -168,8 +175,10 @@ namespace SB_VerticalToolMenu
 
         private void checkHoveredItem(int num)
         {
-            if ( !(!Game1.player.UsingTool && !Game1.dialogueUp && ((Game1.pickingTool || Game1.player.CanMove) && (!Game1.player.areAllItemsNull() && !Game1.eventUp))) ) return;
-                if (Game1.options.invertScrollDirection)
+            int MAXcurrentToolIndex = 11;
+
+            if (!(!Game1.player.UsingTool && !Game1.dialogueUp && ((Game1.pickingTool || Game1.player.CanMove) && (!Game1.player.areAllItemsNull() && !Game1.eventUp)))) return;
+            if (Game1.options.invertScrollDirection)
                 num *= -1;
 
             while (true)
@@ -181,9 +190,9 @@ namespace SB_VerticalToolMenu
                     {
                         currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[verticalToolbar.numToolsInToolbar - 1].name);
                     }
-                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
+                    else if (currentToolIndex > MAXcurrentToolIndex && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
                     {
-                        currentToolIndex = 11;
+                        currentToolIndex = MAXcurrentToolIndex;
                     }
 
                 }
@@ -193,7 +202,7 @@ namespace SB_VerticalToolMenu
                     {
                         currentToolIndex = 0;
                     }
-                    else if (currentToolIndex > 11 && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
+                    else if (currentToolIndex > MAXcurrentToolIndex && currentToolIndex < Convert.ToInt32(verticalToolbar.buttons[0].name))
                     {
                         currentToolIndex = Convert.ToInt32(verticalToolbar.buttons[0].name);
                     }
@@ -217,17 +226,13 @@ namespace SB_VerticalToolMenu
                 checkHoveredItem(e.Delta > 0 ? 1 : -1);
         }
 
-        private Toolbar getToolbar()
-        {
-            return Game1.onScreenMenus.OfType<Toolbar>().FirstOrDefault();
-        }
-
         /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event data.</param>
         private void onSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
-            verticalToolbar = new VerticalToolBar(getToolbar().xPositionOnScreen - (VerticalToolBar.getInitialWidth() / 2), Game1.viewport.Height - VerticalToolBar.getInitialHeight());
+            baseMaxItems = Game1.player.MaxItems;
+            verticalToolbar = new VerticalToolBar(SB_VerticalToolMenu.Framework.Orientation.BottomRight);
             Game1.onScreenMenus.Add(verticalToolbar);
 
             currentToolIndex = Game1.player.CurrentToolIndex;
@@ -244,16 +249,17 @@ namespace SB_VerticalToolMenu
                 Game1.player.CurrentItem.actionWhenStopBeingHeld(Game1.player);
             if (right)
             {
-                List<Item> range = Game1.player.Items.ToList().GetRange(0,12);
-                range.AddRange(Game1.player.Items.ToList().GetRange(12, 24 + VerticalToolBar.NUM_BUTTONS));
+                List<Item> range = Game1.player.Items.ToList().GetRange(12,baseMaxItems - 12);
+                range.AddRange(Game1.player.Items.ToList().GetRange(0, 12));
+                range.AddRange(Game1.player.Items.ToList().GetRange(baseMaxItems, VerticalToolBar.NUM_BUTTONS));
                 Game1.player.setInventory(range);
             }
             else
             {
-                List<Item> range = Game1.player.Items.ToList().GetRange(36 - 12, 12);
-                for (int index = 0; index < 36 - 12; ++index)
+                List<Item> range = Game1.player.Items.ToList().GetRange(baseMaxItems - 12, 12);
+                for (int index = 0; index < baseMaxItems - 12; ++index)
                     range.Add(Game1.player.Items[index]);
-                range.AddRange(Game1.player.Items.ToList().GetRange(36, VerticalToolBar.NUM_BUTTONS));
+                range.AddRange(Game1.player.Items.ToList().GetRange(baseMaxItems, VerticalToolBar.NUM_BUTTONS));
                 Game1.player.setInventory(range);
             }
             Game1.player.netItemStowed.Set(false);

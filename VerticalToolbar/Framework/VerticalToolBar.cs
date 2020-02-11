@@ -1,34 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using StardewValley;
-using StardewValley.Menus;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using StardewValley;
+using StardewValley.Menus;
 using SObject = StardewValley.Object;
 
 namespace SB_VerticalToolMenu.Framework
 {
+    public enum Orientation
+    {
+        LeftOfToolbar,
+        RightOfToolbar,
+        BottomLeft,
+        BottomRight
+    }
+
     internal class VerticalToolBar : IClickableMenu
     {
         public List<ClickableComponent> buttons = new List<ClickableComponent>();
         public static int NUM_BUTTONS = 5;
+        public Orientation orientation;
         private string hoverTitle = "";
         private float transparency = 1f;
         public Rectangle toolbarTextSource = new Rectangle(0, 256, 60, 60);
         public int numToolsInToolbar = 0;
         private Item hoverItem;
         public bool forceDraw = false;
+        private readonly int baseMaxItems = Game1.player.MaxItems;
 
-        public VerticalToolBar(int x, int y, int numButtons = 5, bool forceDraw = false)
-            : base(x, y, 
-                  (Game1.tileSize * 3 / 2), 
-                  ( (Game1.tileSize * numButtons) + (Game1.tileSize / 2) ))
+        public VerticalToolBar(Orientation o, int numButtons = 5, bool forceDraw = false)
+            : base()
         {
+
+            orientation = o;
             NUM_BUTTONS = numButtons;
             this.forceDraw = forceDraw;
-            for (int count = Game1.player.Items.Count; count < (36 + VerticalToolBar.NUM_BUTTONS); count++)
+            getDimensions();
+            // For compatibility with Bigger Backpack
+            int newInventory = baseMaxItems + VerticalToolBar.NUM_BUTTONS;
+            for (int count = Game1.player.Items.Count; count < newInventory; count++)
             {
                 Game1.player.Items.Add(null);
             }
@@ -38,14 +51,53 @@ namespace SB_VerticalToolMenu.Framework
                 this.buttons.Add(
                     new ClickableComponent(
                         new Rectangle(
-                            (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4) + 16,
-                            this.yPositionOnScreen + (index * Game1.tileSize),
+                            this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder,
+                            this.yPositionOnScreen + IClickableMenu.spaceToClearSideBorder + (index * Game1.tileSize),
                             Game1.tileSize, 
                             Game1.tileSize),
-                        string.Concat(index + 36)));
+                        string.Concat(index + baseMaxItems)));
             }
         }
 
+        public static Toolbar getToolbar()
+        {
+            return Game1.onScreenMenus.OfType<Toolbar>().FirstOrDefault();
+        }
+
+        public void getDimensions()
+        {
+            Rectangle dimensionRectangle;
+            dimensionRectangle.Width = Game1.tileSize * 3 / 2;
+            dimensionRectangle.Height = Game1.tileSize* NUM_BUTTONS +(Game1.tileSize / 2);
+
+            switch (orientation)
+            {
+                case Orientation.LeftOfToolbar:
+                    dimensionRectangle.X = (Game1.viewport.Width / 2 - 384 - 64) - (getInitialWidth() / 2);
+                    dimensionRectangle.Y = Game1.viewport.Height - getInitialHeight(); 
+                    break;
+                case Orientation.RightOfToolbar:
+                    dimensionRectangle.X = (Game1.viewport.Width / 2 - 384 - 64) + getToolbar().width - (getInitialWidth() / 2);
+                    dimensionRectangle.Y = Game1.viewport.Height - getInitialHeight();
+                    break;
+                case Orientation.BottomLeft:
+                    dimensionRectangle.X = IClickableMenu.spaceToClearSideBorder;
+                    dimensionRectangle.Y = Game1.viewport.Height - getInitialHeight();
+                    break;
+                case Orientation.BottomRight:
+                    int test = Game1.staminaRect.Bounds.X;
+                    dimensionRectangle.X = Game1.viewport.Width - this.width - test -IClickableMenu.spaceToClearSideBorder;
+                    dimensionRectangle.Y = Game1.viewport.Height - getInitialHeight();
+                    break;
+                default:
+                    throw new NotSupportedException("Error: Orientation Not Supported");
+            }
+            this.xPositionOnScreen = dimensionRectangle.X;
+            this.yPositionOnScreen = dimensionRectangle.Y;
+            this.width = dimensionRectangle.Width;
+            this.height = dimensionRectangle.Height;    
+
+        }
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             if (Game1.player.UsingTool)
@@ -174,11 +226,12 @@ namespace SB_VerticalToolMenu.Framework
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
         {
+            getDimensions();
             for (int index = 0; index < NUM_BUTTONS; ++index)
                 buttons[index].bounds = new Rectangle(
                             //TODO: Use more reliable coordinates
-                            Game1.activeClickableMenu is GameMenu ? this.xPositionOnScreen : (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4),
-                            this.yPositionOnScreen + (index * Game1.tileSize),
+                            this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder,
+                            this.yPositionOnScreen + IClickableMenu.spaceToClearSideBorder + (index * Game1.tileSize),
                             Game1.tileSize,
                             Game1.tileSize);
         }
@@ -215,7 +268,7 @@ namespace SB_VerticalToolMenu.Framework
                 if (positionOnScreen1 != positionOnScreen2)
                 {
                     for (int index = 0; index < NUM_BUTTONS; ++index)
-                        this.buttons[index].bounds.Y = this.yPositionOnScreen + (index * Game1.tileSize);
+                        this.buttons[index].bounds.Y = this.yPositionOnScreen + IClickableMenu.spaceToClearSideBorder + (index * Game1.tileSize);
                 }
             }
             //Draws the background texture. 
@@ -224,7 +277,7 @@ namespace SB_VerticalToolMenu.Framework
                 Game1.menuTexture, 
                 this.toolbarTextSource,
                 //TODO: Use more reliable coordinates
-                Game1.activeClickableMenu is GameMenu? this.xPositionOnScreen: (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4),
+                this.xPositionOnScreen,
                 this.yPositionOnScreen,
                 Game1.tileSize * 3 / 2,
                 ((Game1.tileSize * NUM_BUTTONS) + (Game1.tileSize / 2)), 
@@ -235,16 +288,17 @@ namespace SB_VerticalToolMenu.Framework
                 this.buttons[index].scale = Math.Max(1f, this.buttons[index].scale - 0.025f);
                 Vector2 location = new Vector2(
                     //TODO: Use more reliable coordinates
-                    (Game1.activeClickableMenu is GameMenu ? this.xPositionOnScreen : (Game1.viewport.Width / 2 - Game1.tileSize * 15 / 2 - Game1.pixelZoom * 4)) + 16,
-                    this.yPositionOnScreen + (index * Game1.tileSize + 16));
-                b.Draw(Game1.menuTexture, location, new Rectangle?(Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, Game1.player.CurrentToolIndex == (index + 36) ? 56 : 10)), Color.White * transparency);
+                    this.buttons[index].bounds.X,
+                    this.buttons[index].bounds.Y);
+                b.Draw(Game1.menuTexture, location, new Rectangle?(Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, Game1.player.CurrentToolIndex == (index + baseMaxItems) ? 56 : 10)), Color.White * transparency);
                 // Need to customize it for toolset //string text = index == 9 ? "0" : (index == 10 ? "-" : (index == 11 ? "=" : string.Concat((object)(index + 1))));
                 //b.DrawString(Game1.tinyFont, text, position + new Vector2(4f, -8f), Color.DimGray * this.transparency);
-                if (Game1.player.Items.Count > (index + 36) && Game1.player.Items.ElementAt<Item>((index + 36)) != null)
+                if (Game1.player.Items.Count <= (index + baseMaxItems) || Game1.player.Items.ElementAt<Item>((index + baseMaxItems)) == null)
                 {
-                    Game1.player.Items[(index + 36)].drawInMenu(b, location, Game1.player.CurrentToolIndex == (index + 36) ? 0.9f : this.buttons.ElementAt<ClickableComponent>(index).scale * 0.8f, this.transparency, 0.88f);
-                    toolBarIndex++;
+                    continue;
                 }
+                Game1.player.Items[(index + baseMaxItems)].drawInMenu(b, location, Game1.player.CurrentToolIndex == (index + baseMaxItems) ? 0.9f : this.buttons.ElementAt<ClickableComponent>(index).scale * 0.8f, this.transparency, 0.88f);
+                toolBarIndex++;
             }
             if (toolBarIndex != numToolsInToolbar)
                 numToolsInToolbar = toolBarIndex;
