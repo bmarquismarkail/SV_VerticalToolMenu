@@ -83,7 +83,7 @@ namespace SB_VerticalToolMenu.Framework
                 return;
             }
 
-            base.receiveLeftClick(x, y);
+            base.receiveLeftClick(x, y, true);
         }
 
         public override void receiveRightClick(int x, int y, bool playSound = true)

@@ -14,6 +14,7 @@ namespace SB_VerticalToolMenu
         /// <summary>The mod configuration.</summary>
         private ModConfig Config;
         private VerticalToolBar verticalToolbar;
+        SB_VerticalToolMenu.Framework.Orientation Orientation;
         private bool isInitiated, modOverride;
         private int currentToolIndex;
         private int scrolling;
@@ -37,6 +38,7 @@ namespace SB_VerticalToolMenu
 
             isInitiated = false;
             modOverride = false;
+            Orientation = Config.Controls.Orientation;
         }
 
         private void onReturnToTitle(object sender, ReturnedToTitleEventArgs e)
@@ -44,7 +46,12 @@ namespace SB_VerticalToolMenu
             isInitiated = false;
         }
 
-        /// <summary>Raised after the game state is updated (≈60 times per second).</summary>
+        private void onReturnToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            isInitiated = false;
+        }
+
+        /// <summary>Raised after the game state is updated (???60 times per second).</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event data.</param>
         private void onUpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -232,7 +239,7 @@ namespace SB_VerticalToolMenu
         private void onSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             baseMaxItems = Game1.player.MaxItems;
-            verticalToolbar = new VerticalToolBar(SB_VerticalToolMenu.Framework.Orientation.BottomRight);
+            verticalToolbar = new VerticalToolBar(this.Orientation);
             Game1.onScreenMenus.Add(verticalToolbar);
 
             currentToolIndex = Game1.player.CurrentToolIndex;

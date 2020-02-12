@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -85,8 +85,7 @@ namespace SB_VerticalToolMenu.Framework
                     dimensionRectangle.Y = Game1.viewport.Height - getInitialHeight();
                     break;
                 case Orientation.BottomRight:
-                    int test = Game1.staminaRect.Bounds.X;
-                    dimensionRectangle.X = Game1.viewport.Width - this.width - test -IClickableMenu.spaceToClearSideBorder;
+                    dimensionRectangle.X = Game1.viewport.Width - (getInitialWidth() /2) -  IClickableMenu.spaceToClearSideBorder - getInitialWidth() - (Game1.showingHealth? 64 : 0);
                     dimensionRectangle.Y = Game1.viewport.Height - getInitialHeight();
                     break;
                 default:
@@ -255,15 +254,26 @@ namespace SB_VerticalToolMenu.Framework
             if (!forceDraw)
             {
                 int positionOnScreen1 = this.yPositionOnScreen;
-                if (Game1.options.pinToolbarToggle)
+                if (Game1.options.pinToolbarToggle )
                 {
                     this.yPositionOnScreen = Game1.viewport.Height - getInitialHeight();
                     this.transparency = Math.Min(1f, this.transparency + 0.075f);
                     if (Game1.GlobalToLocal(Game1.viewport, new Vector2(Game1.player.GetBoundingBox().Center.X, Game1.player.GetBoundingBox().Center.Y)).Y > (double)(Game1.viewport.Height - Game1.tileSize * 3))
                         this.transparency = Math.Max(0.33f, this.transparency - 0.15f);
                 }
-                else
+
+                else if ( !(orientation == Orientation.BottomLeft || orientation == Orientation.BottomRight) )
                     this.yPositionOnScreen = (double)Game1.GlobalToLocal(Game1.viewport, new Vector2(Game1.player.GetBoundingBox().Center.X, Game1.player.GetBoundingBox().Center.Y)).Y > (double)(Game1.viewport.Height / 2 + Game1.tileSize) ? Game1.tileSize / 8 : Game1.viewport.Height - getInitialHeight() - Game1.tileSize / 8;
+                if (orientation == Orientation.BottomRight && Game1.showingHealth)
+                {
+                    int newXPos = Game1.viewport.Width - (getInitialWidth() / 2) - IClickableMenu.spaceToClearSideBorder - getInitialWidth() - 64;
+                    xPositionOnScreen = newXPos;
+                    foreach (ClickableComponent button in this.buttons)
+                    {
+                        button.bounds.X = newXPos + IClickableMenu.spaceToClearSideBorder;
+                    }
+
+                }
                 int positionOnScreen2 = this.yPositionOnScreen;
                 if (positionOnScreen1 != positionOnScreen2)
                 {
@@ -272,16 +282,8 @@ namespace SB_VerticalToolMenu.Framework
                 }
             }
             //Draws the background texture. 
-            IClickableMenu.drawTextureBox(
-                b, 
-                Game1.menuTexture, 
-                this.toolbarTextSource,
-                //TODO: Use more reliable coordinates
-                this.xPositionOnScreen,
-                this.yPositionOnScreen,
-                Game1.tileSize * 3 / 2,
-                ((Game1.tileSize * NUM_BUTTONS) + (Game1.tileSize / 2)), 
-                Color.White * this.transparency, 1f, false);
+            IClickableMenu.drawTextureBox(b, Game1.menuTexture, this.toolbarTextSource, this.xPositionOnScreen, this.yPositionOnScreen, this.width,
+                this.height, Color.White * this.transparency, 1f, false);
             int toolBarIndex = 0;
             for (int index = 0; index < NUM_BUTTONS; ++index)
             {
