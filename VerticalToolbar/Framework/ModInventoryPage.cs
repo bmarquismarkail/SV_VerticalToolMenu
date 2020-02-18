@@ -33,7 +33,7 @@ namespace SB_VerticalToolMenu.Framework
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             Item heldItem = Game1.player.CursorSlotItem;
-            for (int i = Game1.player.MaxItems; i < StardewValley.Farmer.maxInventorySpace; i++)
+            for (int i = Game1.player.Items.Count - VerticalToolBar.NUM_BUTTONS; i < Game1.player.Items.Count; i++)
             {
                 if (Game1.player.Items[i] != null)
                 {
