@@ -46,11 +46,6 @@ namespace SB_VerticalToolMenu
             isInitiated = false;
         }
 
-        private void onReturnToTitle(object sender, ReturnedToTitleEventArgs e)
-        {
-            isInitiated = false;
-        }
-
         /// <summary>Raised after the game state is updated (???60 times per second).</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event data.</param>

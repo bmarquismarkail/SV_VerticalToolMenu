@@ -99,6 +99,7 @@ namespace SB_VerticalToolMenu.Framework
 
         public override void draw(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
         {
+            verticalToolBar.draw(b);
             for (int index = 0; index < VerticalToolBar.NUM_BUTTONS; ++index)
                 verticalToolBar.buttons[index].bounds = new Rectangle(
                             //TODO: Use more reliable coordinates
@@ -107,7 +108,6 @@ namespace SB_VerticalToolMenu.Framework
                             Game1.tileSize,
                             Game1.tileSize);
             base.draw(b);
-            verticalToolBar.draw(b);
         }
     }
 }
