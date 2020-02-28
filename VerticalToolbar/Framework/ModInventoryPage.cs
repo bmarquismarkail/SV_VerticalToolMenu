@@ -98,8 +98,9 @@ namespace SB_VerticalToolMenu.Framework
                             verticalToolBar.yPositionOnScreen + IClickableMenu.spaceToClearSideBorder + (index * Game1.tileSize),
                             Game1.tileSize,
                             Game1.tileSize);
-            base.draw(b);
             verticalToolBar.draw(b);
+            base.draw(b);
+            verticalToolBar.drawToolTip(b);
         }
     }
 }

@@ -324,13 +324,23 @@ namespace SB_VerticalToolMenu.Framework
             if (toolBarIndex != numToolsInToolbar)
                 numToolsInToolbar = toolBarIndex;
 
+            //draw the tooltip if it's feasible, else allow another method to explicitly draw it
+
+            if(Game1.activeClickableMenu == null)
+            {
+                drawToolTip(b);
+            }
+        }
+		
+		public void drawToolTip(SpriteBatch b)
+        {
             //If an item is hovered, shows its tooltip.
             if (this.hoverItem == null)
                 return;
             IClickableMenu.drawToolTip(b, this.hoverItem.getDescription(), this.hoverItem.Name, this.hoverItem);
             this.hoverItem = null;
         }
-
+		
         public static int getInitialWidth()
         {
             return (Game1.tileSize * 3 / 2) ;
