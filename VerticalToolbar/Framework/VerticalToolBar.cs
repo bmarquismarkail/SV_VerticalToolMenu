@@ -29,7 +29,7 @@ namespace SB_VerticalToolMenu.Framework
         public int numToolsInToolbar = 0;
         private Item hoverItem;
         public bool forceDraw = false;
-        private readonly int baseMaxItems = Game1.player.MaxItems;
+        private int baseMaxItems = Game1.player.MaxItems;
 
         public VerticalToolBar(Orientation o, int numButtons = 5, bool forceDraw = false)
             : base()
@@ -221,6 +221,25 @@ namespace SB_VerticalToolMenu.Framework
 
         public override void update(GameTime time)
         {
+            if (baseMaxItems != Game1.player.MaxItems)
+            {
+                var newInventory = Game1.player.MaxItems;
+                if (Game1.player.Items.Count() < (newInventory + NUM_BUTTONS) )
+                {
+                    for (int i = Game1.player.Items.Count(); i < (newInventory + NUM_BUTTONS); i++)
+                        Game1.player.Items.Add(null);
+                }
+                for (int i= 0; i< NUM_BUTTONS; i++)
+                {
+                    this.buttons[i].name = string.Concat(i + newInventory);
+                    Game1.player.Items[newInventory + i] = Game1.player.Items[baseMaxItems + i];
+                    Game1.player.Items[baseMaxItems + i] = null;
+                }
+                if (Game1.player.CurrentToolIndex > (baseMaxItems -1) )
+                    Game1.player.CurrentToolIndex += (newInventory - baseMaxItems);
+
+                baseMaxItems = newInventory;
+            }
         }
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)

@@ -33,14 +33,6 @@ namespace SB_VerticalToolMenu.Framework
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             Item heldItem = Game1.player.CursorSlotItem;
-            for (int i = Game1.player.Items.Count - VerticalToolBar.NUM_BUTTONS; i < Game1.player.Items.Count; i++)
-            {
-                if (Game1.player.Items[i] != null)
-                {
-                    Game1.player.CursorSlotItem = Game1.player.Items[i];
-                    Game1.player.Items[i] = null;
-                }
-            }
             foreach (ClickableComponent button in verticalToolBar.buttons)
             {
                 if (button.containsPoint(x, y))
@@ -99,7 +91,6 @@ namespace SB_VerticalToolMenu.Framework
 
         public override void draw(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
         {
-            verticalToolBar.draw(b);
             for (int index = 0; index < VerticalToolBar.NUM_BUTTONS; ++index)
                 verticalToolBar.buttons[index].bounds = new Rectangle(
                             //TODO: Use more reliable coordinates
@@ -108,6 +99,7 @@ namespace SB_VerticalToolMenu.Framework
                             Game1.tileSize,
                             Game1.tileSize);
             base.draw(b);
+            verticalToolBar.draw(b);
         }
     }
 }
